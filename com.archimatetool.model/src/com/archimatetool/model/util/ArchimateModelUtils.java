@@ -20,6 +20,7 @@ import com.archimatetool.model.IArchimateModel;
 import com.archimatetool.model.IArchimatePackage;
 import com.archimatetool.model.IArchimateRelationship;
 import com.archimatetool.model.IIdentifier;
+import com.archimatetool.model.IJunction;
 
 
 
@@ -52,6 +53,38 @@ public class ArchimateModelUtils {
             return false;
         }
         
+        // If the source concept is a Junction check for valid relationships
+        if(sourceConcept instanceof IJunction) {
+            // Invalid relationship between a concept connected to the Junction and the target concept
+            for(IArchimateRelationship rel : sourceConcept.getTargetRelationships()) {
+                if(!isValidRelationship(rel.getSource().eClass(), targetConcept.eClass(), relationshipType)) {
+                    return false;
+                }
+            }
+            // Has to be the same type of relationship
+            for(IArchimateRelationship rel : getAllRelationshipsForConcept(sourceConcept)) {
+                if(!rel.eClass().equals(relationshipType)) {
+                    return false;
+                }
+            }
+        }
+        
+        // If the target concept is a Junction check for valid relationships
+        if(targetConcept instanceof IJunction) {
+            // Invalid relationship between a concept connected to the Junction and the source concept
+            for(IArchimateRelationship rel : targetConcept.getSourceRelationships()) {
+                if(!isValidRelationship(sourceConcept.eClass(), rel.getTarget().eClass(), relationshipType)) {
+                    return false;
+                }
+            }
+            // Has to be the same type of relationship
+            for(IArchimateRelationship rel : getAllRelationshipsForConcept(targetConcept)) {
+                if(!rel.eClass().equals(relationshipType)) {
+                    return false;
+                }
+            }
+        }
+        
         return isValidRelationship(sourceConcept.eClass(), targetConcept.eClass(), relationshipType);
     }
 
@@ -64,16 +97,6 @@ public class ArchimateModelUtils {
      */
     public static final boolean isValidRelationship(EClass sourceType, EClass targetType, EClass relationshipType) {
         return RelationshipsMatrix.INSTANCE.isValidRelationship(sourceType, targetType, relationshipType);
-    }
-    
-    /**
-     * Get an array of all valid relationship class types between source and target Archimate components
-     * @param sourceConcept The source concept
-     * @param targetConcept The target concept
-     * @return An array of all valid relationship class types between sourceElement and targetElement
-     */
-    public static EClass[] getValidRelationships(IArchimateConcept sourceConcept, IArchimateConcept targetConcept) {
-        return getValidRelationships(sourceConcept.eClass(), targetConcept.eClass());
     }
     
     /**
